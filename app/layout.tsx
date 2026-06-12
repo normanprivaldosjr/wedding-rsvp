@@ -17,6 +17,9 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "You're Invited — RSVP",
   description: "Please let us know if you'll be joining us on our special day.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
