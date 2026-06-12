@@ -1,0 +1,61 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Norman & Ruby Wedding//Wedding RSVP//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+
+BEGIN:VTIMEZONE
+TZID:Asia/Manila
+X-LIC-LOCATION:Asia/Manila
+BEGIN:STANDARD
+TZOFFSETFROM:+0800
+TZOFFSETTO:+0800
+TZNAME:PHT
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE
+
+BEGIN:VEVENT
+UID:norman-ruby-wedding-20260828@normanruby.my.canva.site
+DTSTAMP:20260612T000000Z
+
+SUMMARY:Norman & Ruby's Wedding
+
+DTSTART;TZID=Asia/Manila:20260828T100000
+DTEND;TZID=Asia/Manila:20260828T160000
+
+LOCATION:Naga Metropolitan Cathedral, Elias Angeles St, Naga City, Camarines Sur, Philippines
+
+DESCRIPTION:Join us as we celebrate our wedding day!\n\n
+Ceremony:\n
+10:00 AM\n
+Naga Metropolitan Cathedral\n\n
+Reception:\n
+Thomas Hall at Royale Emelina\n\n
+Please arrive at least 30 minutes before the ceremony.\n\n
+Adults-only celebration.\n
+Unplugged ceremony.\n\n
+Wedding Website:\n
+https://normanruby.my.canva.site/\n\n\
+We can't wait to celebrate with you!
+
+URL:https://normanruby.my.canva.site/
+STATUS:CONFIRMED
+SEQUENCE:0
+TRANSP:OPAQUE
+
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Norman & Ruby's Wedding is tomorrow
+TRIGGER:-P1D
+END:VALARM
+
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Norman & Ruby's Wedding starts in 2 hours
+TRIGGER:-PT2H
+END:VALARM
+
+END:VEVENT
+
+END:VCALENDAR
