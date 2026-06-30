@@ -5,6 +5,8 @@ import { useState } from "react";
 import {
   updateMaxGuests,
   type UpdateMaxGuestsState,
+  updateGroup,
+  type UpdateGroupState,
 } from "@/app/actions/guests";
 
 type Guest = {
@@ -61,11 +63,22 @@ export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
     FormData
   >(updateMaxGuests, null);
 
+  const [groupState, groupAction, isUpdatingGroup] = useActionState<
+    UpdateGroupState,
+    FormData
+  >(updateGroup, null);
+
   useEffect(() => {
     if (updateState && "success" in updateState) {
       setSelected(null);
     }
   }, [updateState]);
+
+  useEffect(() => {
+    if (groupState && "success" in groupState) {
+      setSelected(null);
+    }
+  }, [groupState]);
 
   return (
     <>
@@ -240,6 +253,35 @@ export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
                     {new Date(selected.rsvp.submitted_at).toLocaleDateString()}
                   </p>
                 )}
+              </div>
+
+              <div className="border-t border-cream-dark pt-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-warm-muted">
+                  Group
+                </p>
+                <form action={groupAction} className="flex items-center gap-2">
+                  <input type="hidden" name="guest_id" value={selected.id} />
+                  <input
+                    key={selected.id}
+                    name="guest_group"
+                    type="text"
+                    defaultValue={selected.guest_group ?? ""}
+                    placeholder="e.g. BRIDE'S SIDE"
+                    className="flex-1 rounded-xl border border-cream-dark bg-cream px-3 py-2 text-sm text-warm-dark outline-none transition focus:border-rose focus:ring-2 focus:ring-rose/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isUpdatingGroup}
+                    className="rounded-xl bg-warm-dark px-4 py-2 text-sm font-medium text-cream transition hover:bg-warm-dark/80 disabled:opacity-50"
+                  >
+                    {isUpdatingGroup ? "Saving…" : "Save"}
+                  </button>
+                  {groupState && "error" in groupState && (
+                    <span className="text-xs text-rose-dark">
+                      {groupState.error}
+                    </span>
+                  )}
+                </form>
               </div>
             </div>
           </div>

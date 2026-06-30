@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/app/lib/supabase-admin";
 
 export type AddGuestState = { error: string } | { success: true } | null;
 export type UpdateMaxGuestsState = { error: string } | { success: true } | null;
+export type UpdateGroupState = { error: string } | { success: true } | null;
 
 function generateInvitationCode(name: string): string {
   const slug = name
@@ -62,6 +63,27 @@ export async function updateMaxGuests(
     .eq("id", id);
 
   if (error) return { error: "Failed to update. Please try again." };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function updateGroup(
+  _prevState: UpdateGroupState,
+  formData: FormData
+): Promise<UpdateGroupState> {
+  const id = formData.get("guest_id")?.toString().trim() ?? "";
+  const raw = formData.get("guest_group")?.toString().trim() ?? "";
+  const guest_group = raw ? raw.toUpperCase() : null;
+
+  if (!id) return { error: "Guest ID is missing." };
+
+  const { error } = await supabaseAdmin
+    .from("guests")
+    .update({ guest_group })
+    .eq("id", id);
+
+  if (error) return { error: "Failed to update group. Please try again." };
 
   revalidatePath("/dashboard");
   return { success: true };
