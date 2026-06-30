@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   updateMaxGuests,
   type UpdateMaxGuestsState,
@@ -30,6 +29,14 @@ type RSVP = {
 type GuestWithRSVP = Guest & { rsvp: RSVP | null };
 
 type Status = "pending" | "attending" | "declined";
+type SortCol = "name" | "group" | "status" | "party";
+type SortDir = "asc" | "desc";
+
+const STATUS_ORDER: Record<Status, number> = {
+  attending: 0,
+  pending: 1,
+  declined: 2,
+};
 
 function getStatus(row: GuestWithRSVP): Status {
   if (!row.has_rsvped) return "pending";
@@ -56,8 +63,30 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
+function SortIndicator({
+  col,
+  sortCol,
+  sortDir,
+}: {
+  col: SortCol;
+  sortCol: SortCol | null;
+  sortDir: SortDir;
+}) {
+  if (sortCol !== col) return <span className="ml-1 opacity-30">↕</span>;
+  return <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
+}
+
+export default function GuestTable({
+  rows,
+  isFiltered,
+}: {
+  rows: GuestWithRSVP[];
+  isFiltered: boolean;
+}) {
   const [selected, setSelected] = useState<GuestWithRSVP | null>(null);
+  const [sortCol, setSortCol] = useState<SortCol | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
   const [updateState, updateAction, isUpdating] = useActionState<
     UpdateMaxGuestsState,
     FormData
@@ -69,16 +98,44 @@ export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
   >(updateGroup, null);
 
   useEffect(() => {
-    if (updateState && "success" in updateState) {
-      setSelected(null);
-    }
+    if (updateState && "success" in updateState) setSelected(null);
   }, [updateState]);
 
   useEffect(() => {
-    if (groupState && "success" in groupState) {
-      setSelected(null);
-    }
+    if (groupState && "success" in groupState) setSelected(null);
   }, [groupState]);
+
+  const displayedRows = useMemo(() => {
+    if (!sortCol) return rows;
+    return [...rows].sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === "name") {
+        cmp = a.primary_guest_name.localeCompare(b.primary_guest_name);
+      } else if (sortCol === "group") {
+        // Rows without a group always sort last regardless of direction
+        const ag = a.guest_group ?? "\uffff";
+        const bg = b.guest_group ?? "\uffff";
+        cmp = ag.localeCompare(bg);
+      } else if (sortCol === "status") {
+        cmp = STATUS_ORDER[getStatus(a)] - STATUS_ORDER[getStatus(b)];
+      } else if (sortCol === "party") {
+        cmp = a.max_guests - b.max_guests;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [rows, sortCol, sortDir]);
+
+  function handleSort(col: SortCol) {
+    if (sortCol === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortCol(col);
+      setSortDir("asc");
+    }
+  }
+
+  const thClass =
+    "cursor-pointer select-none px-4 py-3 font-medium text-warm-muted transition hover:text-warm-dark";
 
   return (
     <>
@@ -86,15 +143,30 @@ export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-cream-dark bg-cream text-left">
-              <th className="px-6 py-3 font-medium text-warm-muted">Name</th>
-              <th className="px-4 py-3 font-medium text-warm-muted">Group</th>
-              <th className="px-4 py-3 font-medium text-warm-muted">Status</th>
-              <th className="px-4 py-3 font-medium text-warm-muted">Party</th>
+              <th
+                className="cursor-pointer select-none px-6 py-3 font-medium text-warm-muted transition hover:text-warm-dark"
+                onClick={() => handleSort("name")}
+              >
+                Name
+                <SortIndicator col="name" sortCol={sortCol} sortDir={sortDir} />
+              </th>
+              <th className={thClass} onClick={() => handleSort("group")}>
+                Group
+                <SortIndicator col="group" sortCol={sortCol} sortDir={sortDir} />
+              </th>
+              <th className={thClass} onClick={() => handleSort("status")}>
+                Status
+                <SortIndicator col="status" sortCol={sortCol} sortDir={sortDir} />
+              </th>
+              <th className={thClass} onClick={() => handleSort("party")}>
+                Party
+                <SortIndicator col="party" sortCol={sortCol} sortDir={sortDir} />
+              </th>
               <th className="px-4 py-3 font-medium text-warm-muted">Notes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-cream-dark">
-            {rows.map((row) => {
+            {displayedRows.map((row) => {
               const status = getStatus(row);
               return (
                 <tr
@@ -125,13 +197,15 @@ export default function GuestTable({ rows }: { rows: GuestWithRSVP[] }) {
                 </tr>
               );
             })}
-            {rows.length === 0 && (
+            {displayedRows.length === 0 && (
               <tr>
                 <td
                   colSpan={5}
                   className="px-6 py-10 text-center text-warm-muted"
                 >
-                  No guests yet. Use the &ldquo;Add Guest&rdquo; button above to get started.
+                  {isFiltered
+                    ? "No guests match the current filters."
+                    : "No guests yet. Use the \u201cAdd Guest\u201d button above to get started."}
                 </td>
               </tr>
             )}
